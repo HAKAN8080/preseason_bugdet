@@ -642,7 +642,7 @@ with main_tabs[1]:
             
             st.metric(
                 label="2026 Brüt Kar",
-                value=f"₺{gp_2026:,.0f}",
+                value=format_currency(gp_2026),
                 delta=f"%{gp_growth:.1f} vs 2025"
             )
             
