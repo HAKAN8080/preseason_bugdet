@@ -1011,25 +1011,25 @@ with main_tabs[1]:
                 'Metrik': ['Toplam Satış (TRY)', 'Toplam Brüt Kar (TRY)', 
                           'Brüt Marj %', 'Ort. Stok (TRY)', 'Stok/SMM Oranı'],
                 '2024': [
-                    f"₺{summary[2024]['Total_Sales']:,.0f}",
-                    f"₺{summary[2024]['Total_GrossProfit']:,.0f}",
-                    f"%{summary[2024]['Avg_GrossMargin%']:.2f}",
-                    f"₺{summary[2024]['Avg_Stock']:,.0f}",
-                    f"{summary[2024]['Avg_Stock_COGS_Ratio']:.2f}"
+                    format_currency(summary[2024]['Total_Sales']),
+                    format_currency(summary[2024]['Total_GrossProfit']),
+                    format_percent(summary[2024]['Avg_GrossMargin%'], 2),
+                    format_currency(summary[2024]['Avg_Stock']),
+                    format_number(summary[2024]['Avg_Stock_COGS_Ratio'], 2)
                 ],
                 '2025': [
-                    f"₺{summary[2025]['Total_Sales']:,.0f}",
-                    f"₺{summary[2025]['Total_GrossProfit']:,.0f}",
-                    f"%{summary[2025]['Avg_GrossMargin%']:.2f}",
-                    f"₺{summary[2025]['Avg_Stock']:,.0f}",
-                    f"{summary[2025]['Avg_Stock_COGS_Ratio']:.2f}"
+                    format_currency(summary[2025]['Total_Sales']),
+                    format_currency(summary[2025]['Total_GrossProfit']),
+                    format_percent(summary[2025]['Avg_GrossMargin%'], 2),
+                    format_currency(summary[2025]['Avg_Stock']),
+                    format_number(summary[2025]['Avg_Stock_COGS_Ratio'], 2)
                 ],
                 '2026 (Tahmin)': [
-                    f"₺{summary[2026]['Total_Sales']:,.0f}",
-                    f"₺{summary[2026]['Total_GrossProfit']:,.0f}",
-                    f"%{summary[2026]['Avg_GrossMargin%']:.2f}",
-                    f"₺{summary[2026]['Avg_Stock']:,.0f}",
-                    f"{summary[2026]['Avg_Stock_COGS_Ratio']:.2f}"
+                    format_currency(summary[2026]['Total_Sales']),
+                    format_currency(summary[2026]['Total_GrossProfit']),
+                    format_percent(summary[2026]['Avg_GrossMargin%'], 2),
+                    format_currency(summary[2026]['Avg_Stock']),
+                    format_number(summary[2026]['Avg_Stock_COGS_Ratio'], 2)
                 ]
             })
             
