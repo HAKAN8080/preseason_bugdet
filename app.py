@@ -67,6 +67,8 @@ def format_percent(num, decimals=1):
 
 # Sidebar - Sadeleştirilmiş
 st.sidebar.header("⚙️ Temel Parametreler")
+
+
 # 1. FILE UPLOAD
 st.sidebar.subheader("📂 Veri Yükleme")
 uploaded_file = st.sidebar.file_uploader(
