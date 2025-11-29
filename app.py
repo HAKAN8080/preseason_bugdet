@@ -1112,11 +1112,11 @@ with main_tabs[2]:
         for col in ['Satış_2024', 'Stok_2024', 'SMM_2024', 'Satış_2025', 'Stok_2025', 'SMM_2025', 
                     'Satış_2026', 'Stok_2026', 'SMM_2026']:
             if col in display_df.columns:
-                display_df[col] = display_df[col].apply(lambda x: f"₺{x:,.0f}" if x > 0 else "-")
+                display_df[col] = display_df[col].apply(lambda x: format_currency(x) if x > 0 else "-")
         
         for col in ['BM%_2024', 'BM%_2025', 'BM%_2026']:
             if col in display_df.columns:
-                display_df[col] = display_df[col].apply(lambda x: f"%{x*100:.1f}" if x > 0 else "-")
+                display_df[col] = display_df[col].apply(lambda x: format_percent(x*100, 1) if x > 0 else "-")
         
         for col in ['Stok/SMM_Haftalık_2024', 'Stok/SMM_Haftalık_2025', 'Stok/SMM_Haftalık_2026']:
             if col in display_df.columns:
