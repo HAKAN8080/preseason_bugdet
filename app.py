@@ -274,13 +274,13 @@ if 'monthly_targets' not in st.session_state:
         'Ay': list(range(1, 13)),
         'Ay Adı': ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
                    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-        'Hedef (%)': [15.0] * 12
+        'Hedef (%)': [20.0] * 12
     })
 
 if 'maingroup_targets' not in st.session_state:
     st.session_state.maingroup_targets = pd.DataFrame({
         'Ana Grup': main_groups,
-        'Hedef (%)': [15.0] * len(main_groups)
+        'Hedef (%)': [20.0] * len(main_groups)
     })
 
 if 'lessons_learned' not in st.session_state:
