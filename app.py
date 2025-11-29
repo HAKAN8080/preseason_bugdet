@@ -1155,15 +1155,18 @@ with main_tabs[2]:
             'Stok/SMM_Haftalık_2024', 'Stok/SMM_Haftalık_2025', 'Stok/SMM_Haftalık_2026'
         ]]
         
-
-
-
         display_df.columns = [
             'Ana Grup',
             'Adet 2024', 'Adet 2025', 'Adet 2026',
             'Birim Fiyat 2024', 'Birim Fiyat 2025', 'Birim Fiyat 2026',
             'Satış 2024', 'Satış 2025', 'Satış 2026',
             'BM% 2024', 'BM% 2025', 'BM% 2026',
+            'Stok 2024', 'Stok 2025', 'Stok 2026',
+            'SMM 2024', 'SMM 2025', 'SMM 2026',
+            'Stok/SMM Hft. 2024', 'Stok/SMM Hft. 2025', 'Stok/SMM Hft. 2026'
+        ]
+        
+                
         st.info(f"📅 {selected_month}. Ay ({days} gün) - Stok/SMM haftalık: (Stok / (SMM/{days})*7)")
         
         st.dataframe(
