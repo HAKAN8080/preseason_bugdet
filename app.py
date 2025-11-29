@@ -2,11 +2,22 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 from budget_forecast import BudgetForecaster
 import numpy as np
 import tempfile
 import os
+import locale
 
+# Türkçe locale ayarla
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Turkish_Turkey.1254')
+    except:
+        pass
+        
 # Sayfa konfigürasyonu
 st.set_page_config(
     page_title="2026 Satış Bütçe Tahmini",
