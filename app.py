@@ -1180,9 +1180,39 @@ with main_tabs[2]:
             height=600
         )
         
+        # CSV için formatlı veri hazırla
+        csv_export = comparison.copy()
+        
+        # Adet formatla
+        for col in ['Adet_2024', 'Adet_2025', 'Adet_2026']:
+            if col in csv_export.columns:
+                csv_export[col] = csv_export[col].apply(lambda x: int(x) if x > 0 else 0)
+        
+        # Birim fiyat formatla (2 ondalık)
+        for col in ['BirimFiyat_2024', 'BirimFiyat_2025', 'BirimFiyat_2026']:
+            if col in csv_export.columns:
+                csv_export[col] = csv_export[col].round(2)
+        
+        # Para formatla (tam sayı)
+        for col in ['Satış_2024', 'Stok_2024', 'SMM_2024', 
+                    'Satış_2025', 'Stok_2025', 'SMM_2025', 
+                    'Satış_2026', 'Stok_2026', 'SMM_2026']:
+            if col in csv_export.columns:
+                csv_export[col] = csv_export[col].apply(lambda x: int(x) if x > 0 else 0)
+        
+        # Brüt marj yüzde formatına çevir (Excel için)
+        for col in ['BM%_2024', 'BM%_2025', 'BM%_2026']:
+            if col in csv_export.columns:
+                csv_export[col] = (csv_export[col] * 100).round(1)
+        
+        # Stok/SMM 2 ondalık
+        for col in ['Stok/SMM_Haftalık_2024', 'Stok/SMM_Haftalık_2025', 'Stok/SMM_Haftalık_2026']:
+            if col in csv_export.columns:
+                csv_export[col] = csv_export[col].round(2)
+        
         st.download_button(
             label="📥 CSV İndir (Sadece Bu Ay)",
-            data=comparison.to_csv(index=False).encode('utf-8'),
+            data=csv_export.to_csv(index=False, encoding='utf-8-sig', decimal=',', sep=';').encode('utf-8-sig'),
             file_name=f'budget_comparison_month_{selected_month}.csv',
             mime='text/csv'
         )
