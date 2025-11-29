@@ -297,25 +297,41 @@ class BudgetForecaster:
                     month_forecast['Year'] = 2025
                     month_forecast['Month'] = target_month
                     
-                    # Fiyat artışını hesapla (enflasyon veya matrix)
+                    # Fiyat artışını hesapla
                     month_forecast['PriceChange'] = month_forecast.apply(
                         lambda row: price_change_matrix.get((row['MainGroup'], target_month), inflation_rate) 
                         if price_change_matrix else inflation_rate,
                         axis=1
                     )
                     
-                    # 2025 Birim Fiyat = 2024 Fiyat × (1 + Fiyat Artışı)
-                    month_forecast['UnitPrice'] = month_forecast['UnitPrice'] * (1 + month_forecast['PriceChange'])
+                    # Fiyat artış çarpanı (örn: %25 artış = 1.25)
+                    month_forecast['PriceMultiplier'] = 1 + month_forecast['PriceChange']
                     
-                    # 2025 Adet = 2024 Adet × 1.15 (ciro ile aynı büyüme)
+                    # 2025 Birim Fiyat = 2024 Fiyat × Fiyat Çarpanı
+                    month_forecast['UnitPrice'] = month_forecast['UnitPrice'] * month_forecast['PriceMultiplier']
+                    
+                    # 2025 Adet = 2024 Adet × 1.15
                     month_forecast['Quantity'] = month_forecast['Quantity'] * 1.15
                     
                     # 2025 Ciro = Adet × Fiyat
                     month_forecast['Sales'] = month_forecast['Quantity'] * month_forecast['UnitPrice']
                     
-                    # Diğer değerler
-                    month_forecast['GrossProfit'] = month_forecast['GrossProfit'] * 1.15
-                    month_forecast['COGS'] = month_forecast['COGS'] * 1.15
+                    # *** ÖNEMLİ: Ciro artış oranını hesapla ***
+                    # Ciro = Adet × Fiyat = 1.15 × Fiyat Çarpanı
+                    month_forecast['SalesMultiplier'] = 1.15 * month_forecast['PriceMultiplier']
+                    
+                    # Brüt Kar ve SMM aynı oranda artar (marj korunsun)
+                    month_forecast['GrossProfit'] = month_forecast['GrossProfit'] * month_forecast['SalesMultiplier']
+                    month_forecast['COGS'] = month_forecast['COGS'] * month_forecast['SalesMultiplier']
+                    
+                    # Marjı yeniden hesapla
+                    month_forecast['GrossMargin%'] = np.where(
+                        month_forecast['Sales'] > 0,
+                        month_forecast['GrossProfit'] / month_forecast['Sales'],
+                        0
+                    )
+                    
+                    # Stok
                     month_forecast['Stock'] = month_forecast['Stock'] * 1.10
                     
                     # Stok oranı
