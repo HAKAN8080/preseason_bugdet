@@ -1232,9 +1232,11 @@ with main_tabs[2]:
                     month_data_2025 = full_data[(full_data['Year'] == 2025) & (full_data['Month'] == month)].copy()
                     month_data_2026 = full_data[(full_data['Year'] == 2026) & (full_data['Month'] == month)].copy()
                     
-                    # Birleştir
-                    month_comparison = month_data_2024[['MainGroup', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
+                    # 2024 verisi
+                    month_comparison = month_data_2024[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
                         columns={
+                            'Quantity': 'Adet_2024',
+                            'UnitPrice': 'BirimFiyat_2024',
                             'Sales': 'Satis_2024',
                             'GrossProfit': 'BrutKar_2024',
                             'GrossMargin%': 'BrutMarj_2024',
@@ -1243,9 +1245,12 @@ with main_tabs[2]:
                         }
                     )
                     
+                    # 2025 verisi
                     month_comparison = month_comparison.merge(
-                        month_data_2025[['MainGroup', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
+                        month_data_2025[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
                             columns={
+                                'Quantity': 'Adet_2025',
+                                'UnitPrice': 'BirimFiyat_2025',
                                 'Sales': 'Satis_2025',
                                 'GrossProfit': 'BrutKar_2025',
                                 'GrossMargin%': 'BrutMarj_2025',
@@ -1257,9 +1262,12 @@ with main_tabs[2]:
                         how='outer'
                     )
                     
+                    # 2026 verisi
                     month_comparison = month_comparison.merge(
-                        month_data_2026[['MainGroup', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
+                        month_data_2026[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS']].rename(
                             columns={
+                                'Quantity': 'Adet_2026',
+                                'UnitPrice': 'BirimFiyat_2026',
                                 'Sales': 'Satis_2026',
                                 'GrossProfit': 'BrutKar_2026',
                                 'GrossMargin%': 'BrutMarj_2026',
@@ -1281,6 +1289,8 @@ with main_tabs[2]:
                 
                 # Sütun sırası düzenle
                 column_order = ['Ay', 'MainGroup',
+                               'Adet_2024', 'Adet_2025', 'Adet_2026',
+                               'BirimFiyat_2024', 'BirimFiyat_2025', 'BirimFiyat_2026',
                                'Satis_2024', 'Satis_2025', 'Satis_2026',
                                'BrutKar_2024', 'BrutKar_2025', 'BrutKar_2026',
                                'BrutMarj_2024', 'BrutMarj_2025', 'BrutMarj_2026',
@@ -1289,14 +1299,28 @@ with main_tabs[2]:
                 
                 full_comparison = full_comparison[column_order]
                 
-                # BrutMarj sütunlarını yüzde formatından ondalık sayıya çevir (Excel için)
-                for col in ['BrutMarj_2024', 'BrutMarj_2025', 'BrutMarj_2026']:
-                    # 0.42 gibi değerleri 42 yap (Excel'de yüzde formatı uygularız)
-                    full_comparison[col] = full_comparison[col] * 100
+                # FORMATLAMA
+                # Adet - tam sayı
+                for col in ['Adet_2024', 'Adet_2025', 'Adet_2026']:
+                    full_comparison[col] = full_comparison[col].apply(lambda x: int(x) if x > 0 else 0)
                 
-                # CSV'ye çevir - FORMATLAMADAN, ham sayılar
-                # Excel kendi yorumlayacak
-                csv_data = full_comparison.to_csv(index=False, encoding='utf-8-sig', sep=',', decimal='.')
+                # Birim fiyat - 2 ondalık
+                for col in ['BirimFiyat_2024', 'BirimFiyat_2025', 'BirimFiyat_2026']:
+                    full_comparison[col] = full_comparison[col].round(2)
+                
+                # Para - tam sayı
+                for col in ['Satis_2024', 'Satis_2025', 'Satis_2026',
+                           'BrutKar_2024', 'BrutKar_2025', 'BrutKar_2026',
+                           'Stok_2024', 'Stok_2025', 'Stok_2026',
+                           'SMM_2024', 'SMM_2025', 'SMM_2026']:
+                    full_comparison[col] = full_comparison[col].apply(lambda x: int(x) if x > 0 else 0)
+                
+                # BrutMarj yüzde formatı (Excel için)
+                for col in ['BrutMarj_2024', 'BrutMarj_2025', 'BrutMarj_2026']:
+                    full_comparison[col] = (full_comparison[col] * 100).round(1)
+                
+                # CSV'ye çevir - Türkiye formatı
+                csv_data = full_comparison.to_csv(index=False, encoding='utf-8-sig', sep=';', decimal=',')
                 
                 st.download_button(
                     label="📥 Toplu CSV İndir (Tüm Aylar ve Gruplar)",
@@ -1307,7 +1331,7 @@ with main_tabs[2]:
                 )
                 
                 st.success(f"✅ CSV hazır! Toplam {len(full_comparison)} satır veri")
-                st.info("💡 Excel'de açınca sayılar otomatik formatlanacak. BrutMarj sütunlarına yüzde (%) formatı uygulayın.")
+                st.info("💡 Excel'de açınca BrutMarj sütunlarına yüzde (%) formatı uygulayın.")
 
 # Footer
 st.markdown("---")
