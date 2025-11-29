@@ -1118,8 +1118,20 @@ with main_tabs[2]:
         
         display_df = comparison.copy()
         
+        # Adet formatla (tam sayı)
+        for col in ['Adet_2024', 'Adet_2025', 'Adet_2026']:
+            if col in display_df.columns:
+                display_df[col] = display_df[col].apply(lambda x: format_number(x, 0) if x > 0 else "-")
+        
+        # Birim fiyat formatla (2 ondalık)
+        for col in ['BirimFiyat_2024', 'BirimFiyat_2025', 'BirimFiyat_2026']:
+            if col in display_df.columns:
+                display_df[col] = display_df[col].apply(lambda x: f"₺{format_number(x, 2)}" if x > 0 else "-")
+        
+        # Para formatla
         for col in ['Satış_2024', 'Stok_2024', 'SMM_2024', 'Satış_2025', 'Stok_2025', 'SMM_2025', 
                     'Satış_2026', 'Stok_2026', 'SMM_2026']:
+                        
             if col in display_df.columns:
                 display_df[col] = display_df[col].apply(lambda x: format_currency(x) if x > 0 else "-")
         
@@ -1131,8 +1143,11 @@ with main_tabs[2]:
             if col in display_df.columns:
                 display_df[col] = display_df[col].apply(lambda x: f"{x:.2f}" if x > 0 else "-")
         
+        
         display_df = display_df[[
             'MainGroup',
+            'Adet_2024', 'Adet_2025', 'Adet_2026',
+            'BirimFiyat_2024', 'BirimFiyat_2025', 'BirimFiyat_2026',
             'Satış_2024', 'Satış_2025', 'Satış_2026',
             'BM%_2024', 'BM%_2025', 'BM%_2026',
             'Stok_2024', 'Stok_2025', 'Stok_2026',
@@ -1140,15 +1155,15 @@ with main_tabs[2]:
             'Stok/SMM_Haftalık_2024', 'Stok/SMM_Haftalık_2025', 'Stok/SMM_Haftalık_2026'
         ]]
         
+
+
+
         display_df.columns = [
             'Ana Grup',
+            'Adet 2024', 'Adet 2025', 'Adet 2026',
+            'Birim Fiyat 2024', 'Birim Fiyat 2025', 'Birim Fiyat 2026',
             'Satış 2024', 'Satış 2025', 'Satış 2026',
             'BM% 2024', 'BM% 2025', 'BM% 2026',
-            'Stok 2024', 'Stok 2025', 'Stok 2026',
-            'SMM 2024', 'SMM 2025', 'SMM 2026',
-            'Stok/SMM Hft. 2024', 'Stok/SMM Hft. 2025', 'Stok/SMM Hft. 2026'
-        ]
-        
         st.info(f"📅 {selected_month}. Ay ({days} gün) - Stok/SMM haftalık: (Stok / (SMM/{days})*7)")
         
         st.dataframe(
