@@ -620,10 +620,10 @@ with main_tabs[1]:
             
             st.metric(
                 label="2026 Toplam Satış",
-                value=f"₺{sales_2026:,.0f}",
+                value=format_currency(sales_2026),
                 delta=f"%{sales_growth:.1f} vs 2025"
             )
-        
+            
         with col2:
             margin_2026 = summary[2026]['Avg_GrossMargin%']
             margin_2025 = summary[2025]['Avg_GrossMargin%']
@@ -645,7 +645,7 @@ with main_tabs[1]:
                 value=f"₺{gp_2026:,.0f}",
                 delta=f"%{gp_growth:.1f} vs 2025"
             )
-        
+            
         with col4:
             # Stok/SMM Haftalık Oranı
             stock_weekly_2026 = summary[2026]['Avg_Stock_COGS_Weekly']
