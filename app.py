@@ -41,9 +41,32 @@ st.markdown("""
 # Header
 st.markdown('<p class="main-header">📊 2026 Satış Bütçe Tahmini Sistemi</p>', unsafe_allow_html=True)
 
+# Format fonksiyonları
+def format_number(num, decimals=0):
+    """Sayıyı Türkçe formatla"""
+    if pd.isna(num) or num == 0:
+        return "-"
+    if decimals == 0:
+        return f"{num:,.0f}".replace(",", ".")
+    else:
+        formatted = f"{num:,.{decimals}f}"
+        formatted = formatted.replace(",", "TEMP").replace(".", ",").replace("TEMP", ".")
+        return formatted
+
+def format_currency(num):
+    """Para formatla: ₺1.234.567"""
+    if pd.isna(num) or num == 0:
+        return "-"
+    return f"₺{format_number(num, 0)}"
+
+def format_percent(num, decimals=1):
+    """Yüzde formatla: %12,5"""
+    if pd.isna(num):
+        return "-"
+    return f"%{format_number(num, decimals)}"
+
 # Sidebar - Sadeleştirilmiş
 st.sidebar.header("⚙️ Temel Parametreler")
-
 # 1. FILE UPLOAD
 st.sidebar.subheader("📂 Veri Yükleme")
 uploaded_file = st.sidebar.file_uploader(
