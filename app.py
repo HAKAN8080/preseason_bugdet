@@ -784,6 +784,94 @@ with main_tabs[1]:
             
             st.plotly_chart(fig, use_container_width=True)
             
+            # *** YENİ GRAFİK: ADET VE CİRO DEĞİŞİMİ ***
+            st.subheader("2026 vs 2025: Aylık Adet ve Ciro Değişimi")
+            
+            # 2025 ve 2026 aylık toplamları
+            monthly_2025 = full_data[full_data['Year'] == 2025].groupby('Month').agg({
+                'Quantity': 'sum',
+                'Sales': 'sum'
+            }).reset_index()
+            
+            monthly_2026 = full_data[full_data['Year'] == 2026].groupby('Month').agg({
+                'Quantity': 'sum',
+                'Sales': 'sum'
+            }).reset_index()
+            
+            # Merge
+            change_data = monthly_2025.merge(monthly_2026, on='Month', suffixes=('_2025', '_2026'))
+            
+            # Değişim yüzdeleri
+            change_data['Quantity_Change%'] = ((change_data['Quantity_2026'] - change_data['Quantity_2025']) / 
+                                               change_data['Quantity_2025'] * 100)
+            change_data['Sales_Change%'] = ((change_data['Sales_2026'] - change_data['Sales_2025']) / 
+                                           change_data['Sales_2025'] * 100)
+            
+            # İki Y-eksenli grafik
+            fig_change = make_subplots(specs=[[{"secondary_y": True}]])
+            
+            # Adet değişimi (Bar)
+            fig_change.add_trace(
+                go.Bar(
+                    x=change_data['Month'],
+                    y=change_data['Quantity_Change%'],
+                    name='Adet Değişimi (%)',
+                    marker_color='lightblue',
+                    opacity=0.7
+                ),
+                secondary_y=False
+            )
+            
+            # Ciro değişimi (Line)
+            fig_change.add_trace(
+                go.Scatter(
+                    x=change_data['Month'],
+                    y=change_data['Sales_Change%'],
+                    name='Ciro Değişimi (%)',
+                    mode='lines+markers',
+                    line=dict(color='red', width=3),
+                    marker=dict(size=10)
+                ),
+                secondary_y=True
+            )
+            
+            # Layout
+            fig_change.update_xaxes(title_text="Ay")
+            fig_change.update_yaxes(title_text="Adet Değişimi (%)", secondary_y=False)
+            fig_change.update_yaxes(title_text="Ciro Değişimi (%)", secondary_y=True)
+            
+            fig_change.update_layout(
+                title="2026/2025 Aylık Karşılaştırma: Adet vs Ciro",
+                hovermode='x unified',
+                height=500,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_change, use_container_width=True)
+            
+            # Açıklama metrikleri
+            col1, col2, col3 = st.columns(3)
+            
+            avg_qty_change = change_data['Quantity_Change%'].mean()
+            avg_sales_change = change_data['Sales_Change%'].mean()
+            price_impact = avg_sales_change - avg_qty_change
+            
+            with col1:
+                st.metric("Ort. Adet Değişimi", f"%{avg_qty_change:.1f}")
+            
+            with col2:
+                st.metric("Ort. Ciro Değişimi", f"%{avg_sales_change:.1f}")
+            
+            with col3:
+                st.metric("Fiyat Etkisi", f"%{price_impact:.1f}", 
+                         help="Ciro değişimi - Adet değişimi = Fiyat artışının etkisi")
+            
             # Brüt Marj Trendi
             st.subheader("Aylık Brüt Marj % Trendi")
             
