@@ -107,7 +107,10 @@ if forecaster is None:
            - Ay bazında büyüme hedefleri
            - Ana grup bazında büyüme hedefleri
            - Alınan dersler (opsiyonel)
-           - Birim fiyat planlaması ile adet planı
+           - Birim fiyat değişimi
+           - Enflasyon değişimi
+           - Marj değişimi
+           - Stok değişimi
         3. **"📊 Hesapla"** butonuna basın
         4. **"Tahmin Sonuçları"** sekmesinde sonuçları görün
         5. **"Detay Veriler"** sekmesinden CSV export yapabilirsiniz
@@ -118,7 +121,7 @@ if forecaster is None:
         st.markdown("""
         ### 🎯 Gelişmiş Tahmin Motoru
         
-        Sistemimiz, işletmenizin geçmiş performansını analiz ederek geleceği tahmin eder.
+        Thorius R4U sistemi, işletmenizin geçmiş performansını analiz ederek geleceği tahmin eder, bunu yaparken derin öğrenme tekniklerini kullanır.
         
         #### 1️⃣ **Mevsimsellik Analizi**
         Her ürün grubunun aylara göre satış paternleri tespit edilir. Örneğin Aralık ayı 
@@ -148,7 +151,7 @@ if forecaster is None:
         ---
         
         💡 **Not:** Bu metodoloji, yüzlerce perakende işletmesinin veri analitiği deneyiminden 
-        elde edilmiş best practice'leri içerir. Tahminlerimiz %15-25 sapma oranı ile sektör 
+        elde edilmiş best practice'leri içerir. Tahminlerimiz düşük sapma oranı ile sektör 
         ortalamasının üzerinde doğruluk sağlar.
         """)
     
