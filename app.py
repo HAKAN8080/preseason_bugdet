@@ -293,11 +293,11 @@ if 'lessons_learned' not in st.session_state:
 if 'refresh_counter' not in st.session_state:
     st.session_state.refresh_counter = 0
 
-if 'lessons_learned' not in st.session_state:
-    lessons_data = {'Ana Grup': main_groups}
+if 'price_changes' not in st.session_state:  # ← YENİ EKLE
+    price_data = {'Ana Grup': main_groups}
     for month in range(1, 13):
-        lessons_data[str(month)] = [0] * len(main_groups)
-    st.session_state.lessons_learned = pd.DataFrame(lessons_data)
+        price_data[str(month)] = [inflation_future] * len(main_groups)
+    st.session_state.price_changes = pd.DataFrame(price_data)
 
 # Hesaplanmış tahmin sonuçları
 if 'forecast_result' not in st.session_state:
