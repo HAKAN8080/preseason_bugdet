@@ -560,6 +560,13 @@ with main_tabs[0]:
                     for month in range(1, 13):
                         lessons_learned_dict[(main_group, month)] = row[str(month)]
                 
+                # Fiyat değişimlerini dict formatına çevir
+                price_change_dict = {}
+                for _, row in edited_prices.iterrows():
+                    main_group = row['Ana Grup']
+                    for month in range(1, 13):
+                        price_change_dict[(main_group, month)] = row[str(month)] / 100
+                
                 # Genel büyüme parametresi
                 general_growth = (
                     edited_monthly['Hedef (%)'].mean() +
@@ -575,7 +582,9 @@ with main_tabs[0]:
                     maingroup_growth_targets=maingroup_growth_targets,
                     lessons_learned=lessons_learned_dict,
                     inflation_adjustment=inflation_adjustment,  
-                    organic_multiplier=organic_multiplier
+                    organic_multiplier=organic_multiplier,
+                    price_change_matrix=price_change_dict,
+                    inflation_rate=inflation_future / 100
                 )
                 
                 summary = forecaster.get_summary_stats(full_data)
