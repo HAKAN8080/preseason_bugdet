@@ -107,6 +107,7 @@ if forecaster is None:
            - Ay bazında büyüme hedefleri
            - Ana grup bazında büyüme hedefleri
            - Alınan dersler (opsiyonel)
+           - Birim fiyat planlaması ile adet planı
         3. **"📊 Hesapla"** butonuna basın
         4. **"Tahmin Sonuçları"** sekmesinde sonuçları görün
         5. **"Detay Veriler"** sekmesinden CSV export yapabilirsiniz
