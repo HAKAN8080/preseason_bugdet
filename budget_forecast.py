@@ -20,20 +20,22 @@ class BudgetForecaster:
         
         # 2024 verileri - DOĞRU KOLONLAR
         df_2024 = self.df[['Month', 'MainGroupDesc', 
+                           'TY Sales Unit',                # Kolon C - Adet
                            'TY Sales Value TRY2',          # Kolon J - Gerçek satış
                            'TY Gross Profit TRY2',         # Kolon H - Brüt kar  
                            'TY Gross Marjin TRY%',         # Kolon K - Brüt marj %
                            'TY Avg Store Stock Cost TRY2']].copy()  # Kolon I - Stok
-        df_2024.columns = ['Month', 'MainGroup', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
+        df_2024.columns = ['Month', 'MainGroup', 'Quantity', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
         df_2024['Year'] = 2024
         
         # 2025 verileri - DOĞRU KOLONLAR
         df_2025 = self.df[['Month', 'MainGroupDesc',
+                           'TY Sales Unit',                 # Kolon L - Adet
                            'TY Sales Value TRY2.1',         # Kolon S - Gerçek satış
                            'TY Gross Profit TRY2.1',        # Kolon Q - Brüt kar
                            'TY Gross Marjin TRY%.1',        # Kolon T - Brüt marj %
                            'TY Avg Store Stock Cost TRY2.1']].copy()  # Kolon R - Stok
-        df_2025.columns = ['Month', 'MainGroup', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
+        df_2025.columns = ['Month', 'MainGroup', 'Quantity', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
         df_2025['Year'] = 2025
         
         # Birleştir
@@ -53,6 +55,13 @@ class BudgetForecaster:
         
         # SMM hesapla (COGS = Sales - GrossProfit)
         self.data['COGS'] = self.data['Sales'] - self.data['GrossProfit']
+        
+        # Birim Fiyat hesapla
+        self.data['UnitPrice'] = np.where(
+            self.data['Quantity'] > 0,
+            self.data['Sales'] / self.data['Quantity'],
+            0
+        )
         
         # Stok/COGS oranı hesapla (hız)
         self.data['Stock_COGS_Ratio'] = np.where(
@@ -121,10 +130,18 @@ class BudgetForecaster:
         estimate['Year'] = year
         
         # Konservatif: × 0.98
+        estimate['Quantity'] = estimate['Quantity'] * 0.98 if 'Quantity' in estimate.columns else 0
         estimate['Sales'] = estimate['Sales'] * 0.98
         estimate['GrossProfit'] = estimate['GrossProfit'] * 0.98
         estimate['COGS'] = estimate['COGS'] * 0.98
         estimate['Stock'] = estimate['Stock'] * 1.0
+        
+        # Birim fiyat hesapla
+        estimate['UnitPrice'] = np.where(
+            estimate['Quantity'] > 0,
+            estimate['Sales'] / estimate['Quantity'],
+            0
+        ) if 'Quantity' in estimate.columns else 0
         
         # Stok oranını yeniden hesapla
         estimate['Stock_COGS_Ratio'] = np.where(
@@ -166,7 +183,8 @@ class BudgetForecaster:
     def forecast_future_months(self, num_months=15, growth_param=0.1, margin_improvement=0.0, 
                               stock_change_pct=0.0, monthly_growth_targets=None, 
                               maingroup_growth_targets=None, lessons_learned=None,
-                              inflation_adjustment=1.0, organic_multiplier=0.5):
+                              inflation_adjustment=1.0, organic_multiplier=0.5,
+                              price_change_matrix=None, inflation_rate=0.25):
         """
         Son gerçekleşen aydan itibaren belirtilen sayıda ay tahmin et
         
@@ -181,6 +199,8 @@ class BudgetForecaster:
         lessons_learned: Dict {(maingroup, month): score} - Alınan dersler (-10 ile +10 arası)
         inflation_adjustment: Enflasyon düzeltme faktörü (örn: 25/35 = 0.71)
         organic_multiplier: Organik büyüme çarpanı (0.0=Çekimser, 0.5=Normal, 1.0=İyimser)
+        price_change_matrix: Dict {(maingroup, month): price_change_pct} - Fiyat değişim matrisi
+        inflation_rate: Enflasyon oranı (default fiyat artışı için, örn: 0.25 = %25)
         """
         
         # Mevsimsellik hesapla
@@ -277,8 +297,23 @@ class BudgetForecaster:
                     month_forecast['Year'] = 2025
                     month_forecast['Month'] = target_month
                     
-                    # 2024-2025 trend uygula (× 1.15 = %15 büyüme)
-                    month_forecast['Sales'] = month_forecast['Sales'] * 1.15
+                    # Fiyat artışını hesapla (enflasyon veya matrix)
+                    month_forecast['PriceChange'] = month_forecast.apply(
+                        lambda row: price_change_matrix.get((row['MainGroup'], target_month), inflation_rate) 
+                        if price_change_matrix else inflation_rate,
+                        axis=1
+                    )
+                    
+                    # 2025 Birim Fiyat = 2024 Fiyat × (1 + Fiyat Artışı)
+                    month_forecast['UnitPrice'] = month_forecast['UnitPrice'] * (1 + month_forecast['PriceChange'])
+                    
+                    # 2025 Adet = 2024 Adet × 1.15 (ciro ile aynı büyüme)
+                    month_forecast['Quantity'] = month_forecast['Quantity'] * 1.15
+                    
+                    # 2025 Ciro = Adet × Fiyat
+                    month_forecast['Sales'] = month_forecast['Quantity'] * month_forecast['UnitPrice']
+                    
+                    # Diğer değerler
                     month_forecast['GrossProfit'] = month_forecast['GrossProfit'] * 1.15
                     month_forecast['COGS'] = month_forecast['COGS'] * 1.15
                     month_forecast['Stock'] = month_forecast['Stock'] * 1.10
@@ -291,9 +326,6 @@ class BudgetForecaster:
                     )
                     
                     forecast_data.append(month_forecast)
-                    
-                    # *** 2026 için bu tahmini hafızada tut (sonraki ayların base'i olarak kullanılacak) ***
-                    # NOT: self.data'yı değiştirmiyoruz artık!
                     
                     continue
             
@@ -371,17 +403,34 @@ class BudgetForecaster:
                 month_forecast['LessonsAdjustment']
             )
             
+            # Fiyat değişimini hesapla
+            month_forecast['PriceChange'] = month_forecast.apply(
+                lambda row: price_change_matrix.get((row['MainGroup'], target_month), inflation_rate) 
+                if price_change_matrix else inflation_rate,
+                axis=1
+            )
+            
+            # 2026 Birim Fiyat = 2025 Fiyat × (1 + Fiyat Değişimi)
+            month_forecast['UnitPrice'] = month_forecast['UnitPrice'] * (1 + month_forecast['PriceChange'])
+            
             # Zaman faktörü (uzak gelecek daha konservatif)
             time_discount = 1.0 - (i * 0.01)
             time_discount = max(time_discount, 0.85)
             
-            # SATIŞ TAHMİNİ - STOK SAĞLIK FAKTÖRÜ VE MEVSİMSELLİK İLE
+            # SATIŞ TAHMİNİ (CİRO) - STOK SAĞLIK FAKTÖRÜ VE MEVSİMSELLİK İLE
             month_forecast['Sales'] = (
                 month_forecast['Sales'] *
                 (1 + organic_growth * 0.3) *  # Organik büyüme %30
                 (1 + month_forecast['CombinedGrowthTarget']) *
                 (0.8 + month_forecast['SeasonalityIndex'] * 0.2) *
                 month_forecast['StockHealthFactor']
+            )
+            
+            # ADET TAHMİNİ = Ciro / Birim Fiyat
+            month_forecast['Quantity'] = np.where(
+                month_forecast['UnitPrice'] > 0,
+                month_forecast['Sales'] / month_forecast['UnitPrice'],
+                0
             )
             
             # Marj iyileştirme
@@ -398,8 +447,9 @@ class BudgetForecaster:
             )
             
             # Gereksiz kolonları temizle
-            month_forecast = month_forecast[['Year', 'Month', 'MainGroup', 'Sales', 'GrossProfit',
-                                            'GrossMargin%', 'Stock', 'COGS', 'Stock_COGS_Ratio']]
+            month_forecast = month_forecast[['Year', 'Month', 'MainGroup', 'Quantity', 'UnitPrice',
+                                            'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS', 
+                                            'Stock_COGS_Ratio']]
             
             forecast_data.append(month_forecast)
         
@@ -411,7 +461,8 @@ class BudgetForecaster:
     def get_full_data_with_forecast(self, num_months=15, growth_param=0.1, margin_improvement=0.0, 
                                     stock_change_pct=0.0, monthly_growth_targets=None, 
                                     maingroup_growth_targets=None, lessons_learned=None,
-                                    inflation_adjustment=1.0, organic_multiplier=0.5):
+                                    inflation_adjustment=1.0, organic_multiplier=0.5,
+                                    price_change_matrix=None, inflation_rate=0.25):
         """Gerçekleşen veri + gelecek tahminlerini birleştir"""
         
         # Gelecek tahminini yap
@@ -424,12 +475,15 @@ class BudgetForecaster:
             maingroup_growth_targets=maingroup_growth_targets,
             lessons_learned=lessons_learned,
             inflation_adjustment=inflation_adjustment,
-            organic_multiplier=organic_multiplier
+            organic_multiplier=organic_multiplier,
+            price_change_matrix=price_change_matrix,
+            inflation_rate=inflation_rate
         )
         
         # Gerçekleşen veriyi düzenle - TAHMİN EDİLEN AYLARI ÇIKAR
-        historical = self.data[['Year', 'Month', 'MainGroup', 'Sales', 'GrossProfit',
-                               'GrossMargin%', 'Stock', 'COGS', 'Stock_COGS_Ratio']].copy()
+        historical = self.data[['Year', 'Month', 'MainGroup', 'Quantity', 'UnitPrice',
+                               'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS', 
+                               'Stock_COGS_Ratio']].copy()
         
         # Sadece gerçek veriyi al (son gerçekleşen aya kadar)
         historical = historical[
