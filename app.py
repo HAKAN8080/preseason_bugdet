@@ -311,7 +311,7 @@ with main_tabs[0]:
     st.markdown("## ⚙️ Tahmin Parametrelerini Ayarlayın")
     st.caption("💡 Parametreleri düzenleyin ve '📊 Hesapla' butonuna basın.")
     
-    param_tabs = st.tabs(["📅 Ay Bazında Hedefler", "🏪 Ana Grup Hedefleri", "📚 Alınan Dersler"])
+    param_tabs = st.tabs(["📅 Ay Bazında Hedefler", "🏪 Ana Grup Hedefleri", "📚 Alınan Dersler", "💵 Birim Fiyat Değişimi"])
     
     # --- AY BAZINDA HEDEFLER ---
     with param_tabs[0]:
