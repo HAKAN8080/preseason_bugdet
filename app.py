@@ -462,6 +462,74 @@ with main_tabs[0]:
                 st.info("**0 puan** → Değişiklik yok")
                 st.caption("Normal seyir, özel bir durum olmadı")
     
+    # --- BİRİM FİYAT DEĞİŞİMİ ---
+    with param_tabs[3]:
+        st.markdown("### 💵 Birim Fiyat Değişimi (2025→2026)")
+        st.caption(f"Ana grup ve ay bazında fiyat artış/azalış oranları. Default: %{inflation_future:.0f} (Enflasyon)")
+        
+        month_names = {
+            1: 'O', 2: 'Ş', 3: 'M', 4: 'N',
+            5: 'M', 6: 'H', 7: 'T', 8: 'A',
+            9: 'E', 10: 'E', 11: 'K', 12: 'A'
+        }
+        
+        month_full_names = {
+            1: 'Ocak', 2: 'Şubat', 3: 'Mart', 4: 'Nisan',
+            5: 'Mayıs', 6: 'Haziran', 7: 'Temmuz', 8: 'Ağustos',
+            9: 'Eylül', 10: 'Ekim', 11: 'Kasım', 12: 'Aralık'
+        }
+        
+        column_config = {
+            'Ana Grup': st.column_config.TextColumn('Grup', disabled=True, width='small')
+        }
+        
+        for month in range(1, 13):
+            column_config[str(month)] = st.column_config.NumberColumn(
+                month_names[month],
+                help=f"{month_full_names[month]} - Fiyat artış %",
+                min_value=-50.0,
+                max_value=100.0,
+                step=1.0,
+                format="%.1f",
+                width='small'
+            )
+        
+        num_price_rows = len(st.session_state.price_changes)
+        price_height = min(num_price_rows * 35 + 50, 800)
+        
+        edited_prices = st.data_editor(
+            st.session_state.price_changes,
+            use_container_width=True,
+            hide_index=True,
+            height=price_height,
+            column_config=column_config,
+            key='price_editor'
+        )
+        
+        col_a, col_b, col_c = st.columns(3)
+        
+        all_prices = []
+        for month in range(1, 13):
+            all_prices.extend(edited_prices[str(month)].tolist())
+        
+        avg_price = np.mean(all_prices)
+        min_price = np.min(all_prices)
+        max_price = np.max(all_prices)
+        
+        col_a.metric("📊 Ortalama Artış", f"%{avg_price:.1f}")
+        col_b.metric("📉 Minimum", f"%{min_price:.1f}")
+        col_c.metric("📈 Maximum", f"%{max_price:.1f}")
+        
+        with st.expander("💡 Fiyat Değişimi Nasıl Kullanılır?"):
+            st.markdown(f"""
+            **Birim Fiyat Tahmini:**
+            - 2026 Fiyat = 2025 Fiyat × (1 + Fiyat Artış %)
+            - Default artış: **%{inflation_future:.0f}** (Enflasyon)
+            
+            **Adet Hesabı:**
+            - Adet = Tahmin Edilen Ciro / Birim Fiyat
+            """)
+    
     # --- BÜYÜK HESAPLA BUTONU ---
     st.markdown("---")
     st.markdown("### 🚀 Tahmini Hesapla")
@@ -521,6 +589,7 @@ with main_tabs[0]:
                 }
                 
                 st.success("✅ Tahmin başarıyla hesaplandı! 'Tahmin Sonuçları' sekmesine geçin.")                
+
 # ==================== TAHMİN SONUÇLARI TAB ====================
 with main_tabs[1]:
     if st.session_state.forecast_result is None:
