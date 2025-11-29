@@ -1056,31 +1056,38 @@ with main_tabs[2]:
                          7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
         days = days_in_month[selected_month]
         
-        comparison = data_2024[['MainGroup', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
+        comparison = data_2024[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
             columns={
+                'Quantity': 'Adet_2024',
+                'UnitPrice': 'BirimFiyat_2024',
                 'Sales': 'Satış_2024',
                 'GrossMargin%': 'BM%_2024',
                 'Stock': 'Stok_2024',
                 'COGS': 'SMM_2024'
             }
         )
-        
+
         comparison = comparison.merge(
-            data_2025[['MainGroup', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
+            data_2025[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
                 columns={
+                    'Quantity': 'Adet_2025',
+                    'UnitPrice': 'BirimFiyat_2025',
                     'Sales': 'Satış_2025',
                     'GrossMargin%': 'BM%_2025',
                     'Stock': 'Stok_2025',
                     'COGS': 'SMM_2025'
                 }
             ),
+        
             on='MainGroup',
             how='outer'
         )
         
         comparison = comparison.merge(
-            data_2026[['MainGroup', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
+            data_2026[['MainGroup', 'Quantity', 'UnitPrice', 'Sales', 'GrossMargin%', 'Stock', 'COGS']].rename(
                 columns={
+                    'Quantity': 'Adet_2026',
+                    'UnitPrice': 'BirimFiyat_2026',
                     'Sales': 'Satış_2026',
                     'GrossMargin%': 'BM%_2026',
                     'Stock': 'Stok_2026',
