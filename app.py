@@ -564,7 +564,7 @@ with main_tabs[0]:
                 
                 # Fiyat değişimlerini dict formatına çevir
                 price_change_dict = {}
-                for _, row in edited_prices.iterrows():
+                for _, row in st.session_state.price_changes.iterrows():  # ✅ Session state'den oku
                     main_group = row['Ana Grup']
                     for month in range(1, 13):
                         price_change_dict[(main_group, month)] = row[str(month)] / 100
