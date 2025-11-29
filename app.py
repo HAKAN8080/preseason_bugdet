@@ -543,6 +543,8 @@ with main_tabs[0]:
                 st.session_state.monthly_targets = edited_monthly
                 st.session_state.maingroup_targets = edited_maingroup
                 st.session_state.lessons_learned = edited_lessons
+                st.session_state.price_changes = edited_prices
+
                 
                 # Parametreleri hazırla
                 monthly_growth_targets = {}
