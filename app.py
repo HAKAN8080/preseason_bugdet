@@ -318,6 +318,7 @@ st.session_state.lessons_learned = pd.DataFrame(lessons_data)
 # Refresh counter - force rerun için
 if 'refresh_counter' not in st.session_state:
     st.session_state.refresh_counter = 0
+    
 
 # Her zaman güncel ana grupları kullan
 price_data = {'Ana Grup': main_groups}
