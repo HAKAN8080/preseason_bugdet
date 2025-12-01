@@ -82,6 +82,7 @@ uploaded_file = st.sidebar.file_uploader(
 def load_data(file_path):
     return BudgetForecaster(file_path)
 
+
 forecaster = None
 if uploaded_file is not None:
     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
@@ -92,10 +93,24 @@ if uploaded_file is not None:
         forecaster = load_data(tmp_path)
     
     os.unlink(tmp_path)
+    
+    # *** YENİ DOSYA YÜKLENDİĞİNDE SESSION STATE'İ SIFIRLA ***
+    current_file_name = uploaded_file.name
+    
+    if 'last_uploaded_file' not in st.session_state or st.session_state.last_uploaded_file != current_file_name:
+        # Yeni dosya - session state'i temizle
+        keys_to_clear = [k for k in st.session_state.keys() if k not in ['last_uploaded_file']]
+        for key in keys_to_clear:
+            del st.session_state[key]
+        
+        st.session_state.last_uploaded_file = current_file_name
+        st.rerun()
 
 
 # Eğer dosya yüklenmemişse bilgi göster ve dur
 if forecaster is None:
+    
+    
     st.info("👆 Lütfen soldaki menüden Excel dosyanızı yükleyin.")
     
     # Kullanım Kılavuzu - Expander içinde
