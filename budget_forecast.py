@@ -18,23 +18,23 @@ class BudgetForecaster:
     def process_data(self):
         """Veriyi yıl bazında ayrıştır ve temizle"""
         
-        # 2024 verileri - DOĞRU KOLONLAR
+        # 2024 verileri - GÜNCEL KOLONLAR
         df_2024 = self.df[['Month', 'MainGroupDesc', 
-                           'TY Sales Unit',                # Kolon C - Adet
-                           'TY Sales Value TRY2',          # Kolon J - Gerçek satış
-                           'TY Gross Profit TRY2',         # Kolon H - Brüt kar  
-                           'TY Gross Marjin TRY%',         # Kolon K - Brüt marj %
-                           'TY Avg Store Stock Cost TRY2']].copy()  # Kolon I - Stok
+                           'TY Sales Unit',                # Kolon 4 - Adet
+                           'TY Sales Value TRY2',          # Kolon 11 - Gerçek satış
+                           'TY Gross Profit TRY2',         # Kolon 9 - Brüt kar  
+                           'TY Gross Marjin TRY%',         # Kolon 12 - Brüt marj %
+                           'TY Avg Store Stock Cost TRY2']].copy()  # Kolon 10 - Stok
         df_2024.columns = ['Month', 'MainGroup', 'Quantity', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
         df_2024['Year'] = 2024
         
-        # 2025 verileri - DOĞRU KOLONLAR
+        # 2025 verileri - GÜNCEL KOLONLAR
         df_2025 = self.df[['Month', 'MainGroupDesc',
-                           'TY Sales Unit',                 # Kolon L - Adet
-                           'TY Sales Value TRY2.1',         # Kolon S - Gerçek satış
-                           'TY Gross Profit TRY2.1',        # Kolon Q - Brüt kar
-                           'TY Gross Marjin TRY%.1',        # Kolon T - Brüt marj %
-                           'TY Avg Store Stock Cost TRY2.1']].copy()  # Kolon R - Stok
+                           'TY Sales Unit.1',               # Kolon 13 - Adet
+                           'TY Sales Value TRY2.1',         # Kolon 20 - Gerçek satış
+                           'TY Gross Profit TRY2.1',        # Kolon 18 - Brüt kar
+                           'TY Gross Marjin TRY%.1',        # Kolon 21 - Brüt marj %
+                           'TY Avg Store Stock Cost TRY2.1']].copy()  # Kolon 19 - Stok
         df_2025.columns = ['Month', 'MainGroup', 'Quantity', 'Sales', 'GrossProfit', 'GrossMargin%', 'Stock']
         df_2025['Year'] = 2025
         
@@ -184,7 +184,7 @@ class BudgetForecaster:
                               stock_change_pct=0.0, monthly_growth_targets=None, 
                               maingroup_growth_targets=None, lessons_learned=None,
                               inflation_adjustment=1.0, organic_multiplier=0.5,
-                              price_change_matrix=None, inflation_rate=0.25):
+                              price_change_matrix=None, inflation_rate=0.25, organic_growth_rate=0.15):
         """
         Son gerçekleşen aydan itibaren belirtilen sayıda ay tahmin et
         
@@ -201,6 +201,7 @@ class BudgetForecaster:
         organic_multiplier: Organik büyüme çarpanı (0.0=Çekimser, 0.5=Normal, 1.0=İyimser)
         price_change_matrix: Dict {(maingroup, month): price_change_pct} - Fiyat değişim matrisi
         inflation_rate: Enflasyon oranı (default fiyat artışı için, örn: 0.25 = %25)
+        organic_growth_rate: Organik büyüme oranı (örn: 0.15 = %15) - Yeni parametre
         """
         
         # Mevsimsellik hesapla
@@ -413,7 +414,7 @@ class BudgetForecaster:
             month_forecast['StockHealthFactor'] = month_forecast['MainGroup'].map(stock_health_factors)
             month_forecast['StockHealthFactor'] = month_forecast['StockHealthFactor'].fillna(1.0)
             
-            # Kombine büyüme hedefi
+            # Kombine büyüme hedefi - ORTALAMA (eski mantık)
             month_forecast['CombinedGrowthTarget'] = (
                 (month_forecast['MonthlyGrowthTarget'] + month_forecast['MainGroupGrowthTarget']) / 2 +
                 month_forecast['LessonsAdjustment']
@@ -433,13 +434,14 @@ class BudgetForecaster:
             time_discount = 1.0 - (i * 0.01)
             time_discount = max(time_discount, 0.85)
             
-            # SATIŞ TAHMİNİ (CİRO) - STOK SAĞLIK FAKTÖRÜ VE MEVSİMSELLİK İLE
+            # SATIŞ TAHMİNİ - PARAMETRİK ORGANİK BÜYÜME
             month_forecast['Sales'] = (
                 month_forecast['Sales'] *
-                (1 + organic_growth * 0.3) *  # Organik büyüme %30
-                (1 + month_forecast['CombinedGrowthTarget']) *
+                (1 + organic_growth * organic_growth_rate) *  # Organik büyüme parametrik
+                (1 + month_forecast['CombinedGrowthTarget']) *  # Ay+Ana Grup ORTALAMA
                 (0.8 + month_forecast['SeasonalityIndex'] * 0.2) *
-                month_forecast['StockHealthFactor']
+                month_forecast['StockHealthFactor'] *
+                time_discount  # Zaman faktörü
             )
             
             # ADET TAHMİNİ = Ciro / Birim Fiyat
@@ -478,7 +480,7 @@ class BudgetForecaster:
                                     stock_change_pct=0.0, monthly_growth_targets=None, 
                                     maingroup_growth_targets=None, lessons_learned=None,
                                     inflation_adjustment=1.0, organic_multiplier=0.5,
-                                    price_change_matrix=None, inflation_rate=0.25):
+                                    price_change_matrix=None, inflation_rate=0.25, organic_growth_rate=0.15):
         """Gerçekleşen veri + gelecek tahminlerini birleştir"""
         
         # Gelecek tahminini yap
@@ -493,7 +495,8 @@ class BudgetForecaster:
             inflation_adjustment=inflation_adjustment,
             organic_multiplier=organic_multiplier,
             price_change_matrix=price_change_matrix,
-            inflation_rate=inflation_rate
+            inflation_rate=inflation_rate,
+            organic_growth_rate=organic_growth_rate
         )
         
         # Gerçekleşen veriyi düzenle - TAHMİN EDİLEN AYLARI ÇIKAR
@@ -602,3 +605,4 @@ class BudgetForecaster:
             'confidence_level': confidence,
             'avg_growth_2024_2025': np.mean(growth_rates) * 100
         }
+        
