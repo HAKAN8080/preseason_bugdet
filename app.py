@@ -1074,8 +1074,13 @@ with main_tabs[2]:
         # Detaylı tablo
         st.markdown("### 📋 Detaylı Veri Tablosu")
         
-        # Formatlı veri
-        display_data = filtered_data.copy()
+        # Formatlı veri - GEREKSIZ KOLONLARI KALDIR
+        display_data = filtered_data[[
+            'Year', 'Month', 'MainGroup', 'Quantity', 'UnitPrice',
+            'Sales', 'GrossProfit', 'GrossMargin%', 'Stock', 'COGS',
+            'Stock_COGS_Ratio'
+        ]].copy()
+        
         display_data['Sales'] = display_data['Sales'].apply(lambda x: format_currency(x))
         display_data['GrossProfit'] = display_data['GrossProfit'].apply(lambda x: format_currency(x))
         display_data['COGS'] = display_data['COGS'].apply(lambda x: format_currency(x))
@@ -1153,7 +1158,7 @@ with main_tabs[2]:
         # ==================== YENİ RAPOR: AY BAZINDA PERFORMANS ====================
         st.markdown("---")
         st.markdown("## 📊 Ay Bazında Performans Raporu")
-        st.caption("Her ayın yıl toplamına oranları ve performans metrikleri (2024-2025-2026 karşılaştırmalı)")
+        st.caption("Her ayın yıl toplamına oranları ve yıllık büyüme oranları")
         
         # Ay günleri / 7 = hafta
         days_in_month = {
@@ -1172,6 +1177,9 @@ with main_tabs[2]:
                 'Ay': month,
                 'Ay Adı': month_name
             }
+            
+            # Her yıl için veri topla
+            year_data_dict = {}
             
             for year in [2024, 2025, 2026]:
                 year_data = full_data[full_data['Year'] == year]
@@ -1198,29 +1206,67 @@ with main_tabs[2]:
                     # Brüt Marj %
                     bm_pct = (monthly_gp / monthly_sales * 100) if monthly_sales > 0 else 0
                     
-                    # Stok Hafta = (Stok / Aylık SMM) * Ay'ın hafta sayısı
+                    # Stok Hafta
                     weeks_in_month = days_in_month[month]
                     stock_weeks = (monthly_stock / monthly_cogs * weeks_in_month) if monthly_cogs > 0 else 0
                     
-                    # Yıl bazında kolonlar
-                    row_data[f'{year} Ciro'] = monthly_sales
-                    row_data[f'{year} Ciro %'] = sales_pct
-                    row_data[f'{year} Adet'] = monthly_quantity
-                    row_data[f'{year} Adet %'] = quantity_pct
-                    row_data[f'{year} Kar'] = monthly_gp
-                    row_data[f'{year} Kar %'] = gp_pct
-                    row_data[f'{year} BM %'] = bm_pct
-                    row_data[f'{year} Stok Hft'] = stock_weeks
+                    year_data_dict[year] = {
+                        'ciro': monthly_sales,
+                        'ciro_pct': sales_pct,
+                        'adet': monthly_quantity,
+                        'adet_pct': quantity_pct,
+                        'kar': monthly_gp,
+                        'kar_pct': gp_pct,
+                        'bm': bm_pct,
+                        'stok_hft': stock_weeks
+                    }
                 else:
-                    # Veri yoksa 0
-                    row_data[f'{year} Ciro'] = 0
-                    row_data[f'{year} Ciro %'] = 0
-                    row_data[f'{year} Adet'] = 0
-                    row_data[f'{year} Adet %'] = 0
-                    row_data[f'{year} Kar'] = 0
-                    row_data[f'{year} Kar %'] = 0
-                    row_data[f'{year} BM %'] = 0
-                    row_data[f'{year} Stok Hft'] = 0
+                    year_data_dict[year] = {
+                        'ciro': 0, 'ciro_pct': 0, 'adet': 0, 'adet_pct': 0,
+                        'kar': 0, 'kar_pct': 0, 'bm': 0, 'stok_hft': 0
+                    }
+            
+            # YENİ DÜZEN: Cirolar yan yana, Ciro%'ler yan yana...
+            row_data['2024 Ciro'] = year_data_dict[2024]['ciro']
+            row_data['2025 Ciro'] = year_data_dict[2025]['ciro']
+            row_data['2026 Ciro'] = year_data_dict[2026]['ciro']
+            
+            row_data['2024 Ciro %'] = year_data_dict[2024]['ciro_pct']
+            row_data['2025 Ciro %'] = year_data_dict[2025]['ciro_pct']
+            row_data['2026 Ciro %'] = year_data_dict[2026]['ciro_pct']
+            
+            row_data['2024 Adet'] = year_data_dict[2024]['adet']
+            row_data['2025 Adet'] = year_data_dict[2025]['adet']
+            row_data['2026 Adet'] = year_data_dict[2026]['adet']
+            
+            row_data['2024 Adet %'] = year_data_dict[2024]['adet_pct']
+            row_data['2025 Adet %'] = year_data_dict[2025]['adet_pct']
+            row_data['2026 Adet %'] = year_data_dict[2026]['adet_pct']
+            
+            row_data['2024 Kar'] = year_data_dict[2024]['kar']
+            row_data['2025 Kar'] = year_data_dict[2025]['kar']
+            row_data['2026 Kar'] = year_data_dict[2026]['kar']
+            
+            row_data['2024 Kar %'] = year_data_dict[2024]['kar_pct']
+            row_data['2025 Kar %'] = year_data_dict[2025]['kar_pct']
+            row_data['2026 Kar %'] = year_data_dict[2026]['kar_pct']
+            
+            row_data['2024 BM %'] = year_data_dict[2024]['bm']
+            row_data['2025 BM %'] = year_data_dict[2025]['bm']
+            row_data['2026 BM %'] = year_data_dict[2026]['bm']
+            
+            row_data['2024 Stok Hft'] = year_data_dict[2024]['stok_hft']
+            row_data['2025 Stok Hft'] = year_data_dict[2025]['stok_hft']
+            row_data['2026 Stok Hft'] = year_data_dict[2026]['stok_hft']
+            
+            # BÜYÜME ORANLARI (2026/2025)
+            ciro_growth = ((year_data_dict[2026]['ciro'] - year_data_dict[2025]['ciro']) / year_data_dict[2025]['ciro'] * 100) if year_data_dict[2025]['ciro'] > 0 else 0
+            adet_growth = ((year_data_dict[2026]['adet'] - year_data_dict[2025]['adet']) / year_data_dict[2025]['adet'] * 100) if year_data_dict[2025]['adet'] > 0 else 0
+            kar_growth = ((year_data_dict[2026]['kar'] - year_data_dict[2025]['kar']) / year_data_dict[2025]['kar'] * 100) if year_data_dict[2025]['kar'] > 0 else 0
+            
+            row_data['26/25 Ciro Büyüme %'] = ciro_growth
+            row_data['26/25 Adet Büyüme %'] = adet_growth
+            row_data['26/25 Kar Büyüme %'] = kar_growth
             
             monthly_performance.append(row_data)
         
@@ -1229,6 +1275,7 @@ with main_tabs[2]:
         # Formatlama
         display_report = performance_df.copy()
         
+        # Cirolar
         for year in [2024, 2025, 2026]:
             display_report[f'{year} Ciro'] = display_report[f'{year} Ciro'].apply(lambda x: format_currency(x))
             display_report[f'{year} Ciro %'] = display_report[f'{year} Ciro %'].apply(lambda x: f"%{x:.1f}")
@@ -1239,13 +1286,20 @@ with main_tabs[2]:
             display_report[f'{year} BM %'] = display_report[f'{year} BM %'].apply(lambda x: f"%{x:.1f}")
             display_report[f'{year} Stok Hft'] = display_report[f'{year} Stok Hft'].apply(lambda x: f"{x:.1f}")
         
-        # Tabloyu göster - GENİŞ TABLO
+        # Büyüme oranları
+        display_report['26/25 Ciro Büyüme %'] = display_report['26/25 Ciro Büyüme %'].apply(lambda x: f"%{x:.1f}")
+        display_report['26/25 Adet Büyüme %'] = display_report['26/25 Adet Büyüme %'].apply(lambda x: f"%{x:.1f}")
+        display_report['26/25 Kar Büyüme %'] = display_report['26/25 Kar Büyüme %'].apply(lambda x: f"%{x:.1f}")
+        
+        # Tabloyu göster
         st.dataframe(
             display_report,
             use_container_width=True,
             hide_index=True,
             height=500
         )
+        
+        st.info("📊 Kolonlar gruplandırılmış: Tüm Cirolar → Tüm Ciro % → Tüm Adetler → ... → Büyüme Oranları")
         
         # Export rapor
         st.markdown("#### 💾 Performans Raporunu İndir")
