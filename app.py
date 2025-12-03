@@ -582,11 +582,44 @@ with main_tabs[0]:
         st.markdown("### 🏪 Ana Grup Bazında Büyüme Hedefleri")
         st.caption("💡 Bir grubu sıfırlamak için `*` yazın, 0 = geçen yılla aynı")
         
-        num_groups = len(st.session_state.maingroup_targets)
+        # ARAMA FİLTRESİ
+        col_search, col_clear = st.columns([4, 1])
+        
+        with col_search:
+            search_term = st.text_input(
+                "🔍 Ana Grup Ara",
+                placeholder="Grup adı veya kelime girin (örn: 'aks')",
+                key="maingroup_search",
+                help="Arama yaparken tablo filtrelenir, değişiklikler otomatik kaydedilir"
+            )
+        
+        with col_clear:
+            if st.button("🔄 Temizle", use_container_width=True):
+                st.session_state.maingroup_search = ""
+                st.rerun()
+        
+        # Filtreleme
+        if search_term:
+            mask = st.session_state.maingroup_targets['Ana Grup'].str.contains(search_term, case=False, na=False)
+            filtered_indices = st.session_state.maingroup_targets[mask].index.tolist()
+            filtered_maingroup = st.session_state.maingroup_targets.loc[filtered_indices].copy()
+            
+            if len(filtered_maingroup) == 0:
+                st.warning(f"⚠️ '{search_term}' içeren grup bulunamadı")
+                filtered_maingroup = st.session_state.maingroup_targets.copy()
+                filtered_indices = st.session_state.maingroup_targets.index.tolist()
+            else:
+                st.success(f"✅ {len(filtered_maingroup)} grup bulundu")
+        else:
+            filtered_maingroup = st.session_state.maingroup_targets.copy()
+            filtered_indices = st.session_state.maingroup_targets.index.tolist()
+        
+        num_groups = len(filtered_maingroup)
         table_height = min(num_groups * 35 + 50, 800)
         
+        # Data editor
         edited_maingroup = st.data_editor(
-            st.session_state.maingroup_targets,
+            filtered_maingroup,
             use_container_width=True,
             hide_index=True,
             height=table_height,
@@ -599,6 +632,11 @@ with main_tabs[0]:
             },
             key='maingroup_editor'
         )
+        
+        # Değişiklikleri geri yaz
+        if not edited_maingroup.equals(filtered_maingroup):
+            for i, idx in enumerate(filtered_indices):
+                st.session_state.maingroup_targets.loc[idx] = edited_maingroup.iloc[i]
     
     # --- ALINAN DERSLER ---
     with param_tabs[2]:
@@ -1196,7 +1234,7 @@ with main_tabs[2]:
                     monthly_quantity = month_data['Quantity'].sum()
                     monthly_gp = month_data['GrossProfit'].sum()
                     monthly_cogs = month_data['COGS'].sum()
-                    monthly_stock = month_data['Stock'].mean()
+                    monthly_stock = month_data['Stock'].sum()  # SUM! (mean değil)
                     
                     # Yüzdeler
                     sales_pct = (monthly_sales / yearly_sales * 100) if yearly_sales > 0 else 0
