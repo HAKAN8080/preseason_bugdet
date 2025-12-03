@@ -133,22 +133,26 @@ def create_parameter_template():
         })
         monthly_template.to_excel(writer, sheet_name='Ay Hedefleri', index=False)
         
-        # Sheet 2: Ana Grup Hedefleri (placeholder)
-        maingroup_template = pd.DataFrame({
-            'Ana Grup': ['Örnek Grup 1', 'Örnek Grup 2'],
-            'Hedef (%)': [20.0, 20.0]
-        })
+        # Sheet 2: Ana Grup Hedefleri - GERÇEK GRUPLARI KULLAN
+        if 'maingroup_targets' in st.session_state:
+            maingroup_template = st.session_state.maingroup_targets.copy()
+        else:
+            # Fallback: örnek gruplar
+            maingroup_template = pd.DataFrame({
+                'Ana Grup': ['Örnek Grup 1', 'Örnek Grup 2'],
+                'Hedef (%)': ['20.0', '20.0']
+            })
         maingroup_template.to_excel(writer, sheet_name='Ana Grup Hedefleri', index=False)
         
         # Sheet 3: Açıklama
         instructions = pd.DataFrame({
             'Talimatlar': [
                 '1. "Ay Hedefleri" sekmesini doldurun',
-                '2. "Ana Grup Hedefleri" sekmesindeki örnek grupları silin',
-                '3. Kendi ana gruplarınızı ekleyin',
-                '4. Hedefleri % olarak girin (örn: 20 = %20 büyüme)',
-                '5. Sıfırlamak için * yazın',
-                '6. Dosyayı kaydedin ve uygulamaya yükleyin'
+                '2. "Ana Grup Hedefleri" zaten dolu - sadece hedefleri değiştirin',
+                '3. Hedefleri % olarak girin (örn: 20 = %20 büyüme)',
+                '4. Sıfırlamak için * yazın',
+                '5. Dosyayı kaydedin ve uygulamaya yükleyin',
+                '6. ÖNEMLI: Dosyayı yükledikten sonra sayfayı yenilemeyin!'
             ]
         })
         instructions.to_excel(writer, sheet_name='Açıklama', index=False)
@@ -168,6 +172,9 @@ def load_parameters_from_excel(uploaded_file):
         maingroup_df = pd.read_excel(uploaded_file, sheet_name='Ana Grup Hedefleri')
         maingroup_df['Hedef (%)'] = maingroup_df['Hedef (%)'].astype(str)
         st.session_state.maingroup_targets = maingroup_df
+        
+        # Başarılı yükleme - parametreleri kaydet
+        save_parameters_to_file()
         
         return True, "✅ Parametreler başarıyla yüklendi!"
     except Exception as e:
@@ -466,7 +473,7 @@ if param_upload:
     success, message = load_parameters_from_excel(param_upload)
     if success:
         st.sidebar.success(message)
-        st.rerun()
+        # Rerun KALDIRILDI - bulanıklaşma sorunu çözüldü
     else:
         st.sidebar.error(message)
 
@@ -549,7 +556,10 @@ with main_tabs[0]:
             key='monthly_editor'
         )
         
-
+        col_a, col_b, col_c = st.columns(3)
+        col_a.metric("📊 Ortalama", "Hesapla sonrası")
+        col_b.metric("📉 Minimum", "Hesapla sonrası")
+        col_c.metric("📈 Maximum", "Hesapla sonrası")
     
     # --- ANA GRUP HEDEFLER ---
     with param_tabs[1]:
@@ -1120,6 +1130,135 @@ with main_tabs[2]:
                 label="📥 Excel Rapor İndir",
                 data=output,
                 file_name="budget_detay_rapor.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+        
+        # ==================== YENİ RAPOR: AY BAZINDA PERFORMANS ====================
+        st.markdown("---")
+        st.markdown("## 📊 Ay Bazında Performans Raporu")
+        st.caption("Her ayın yıl toplamına oranları ve performans metrikleri (2024-2025-2026 karşılaştırmalı)")
+        
+        # Ay günleri / 7 = hafta
+        days_in_month = {
+            1: 31/7, 2: 28/7, 3: 31/7, 4: 30/7, 5: 31/7, 6: 30/7,
+            7: 31/7, 8: 31/7, 9: 30/7, 10: 31/7, 11: 30/7, 12: 31/7
+        }
+        
+        # Rapor hesaplama
+        monthly_performance = []
+        
+        for month in range(1, 13):
+            month_name = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][month-1]
+            
+            row_data = {
+                'Ay': month,
+                'Ay Adı': month_name
+            }
+            
+            for year in [2024, 2025, 2026]:
+                year_data = full_data[full_data['Year'] == year]
+                month_data = year_data[year_data['Month'] == month]
+                
+                # Yıllık toplamlar
+                yearly_sales = year_data['Sales'].sum()
+                yearly_quantity = year_data['Quantity'].sum()
+                yearly_gp = year_data['GrossProfit'].sum()
+                
+                if len(month_data) > 0:
+                    # Aylık toplamlar
+                    monthly_sales = month_data['Sales'].sum()
+                    monthly_quantity = month_data['Quantity'].sum()
+                    monthly_gp = month_data['GrossProfit'].sum()
+                    monthly_cogs = month_data['COGS'].sum()
+                    monthly_stock = month_data['Stock'].mean()
+                    
+                    # Yüzdeler
+                    sales_pct = (monthly_sales / yearly_sales * 100) if yearly_sales > 0 else 0
+                    quantity_pct = (monthly_quantity / yearly_quantity * 100) if yearly_quantity > 0 else 0
+                    gp_pct = (monthly_gp / yearly_gp * 100) if yearly_gp > 0 else 0
+                    
+                    # Brüt Marj %
+                    bm_pct = (monthly_gp / monthly_sales * 100) if monthly_sales > 0 else 0
+                    
+                    # Stok Hafta = (Stok / Aylık SMM) * Ay'ın hafta sayısı
+                    weeks_in_month = days_in_month[month]
+                    stock_weeks = (monthly_stock / monthly_cogs * weeks_in_month) if monthly_cogs > 0 else 0
+                    
+                    # Yıl bazında kolonlar
+                    row_data[f'{year} Ciro'] = monthly_sales
+                    row_data[f'{year} Ciro %'] = sales_pct
+                    row_data[f'{year} Adet'] = monthly_quantity
+                    row_data[f'{year} Adet %'] = quantity_pct
+                    row_data[f'{year} Kar'] = monthly_gp
+                    row_data[f'{year} Kar %'] = gp_pct
+                    row_data[f'{year} BM %'] = bm_pct
+                    row_data[f'{year} Stok Hft'] = stock_weeks
+                else:
+                    # Veri yoksa 0
+                    row_data[f'{year} Ciro'] = 0
+                    row_data[f'{year} Ciro %'] = 0
+                    row_data[f'{year} Adet'] = 0
+                    row_data[f'{year} Adet %'] = 0
+                    row_data[f'{year} Kar'] = 0
+                    row_data[f'{year} Kar %'] = 0
+                    row_data[f'{year} BM %'] = 0
+                    row_data[f'{year} Stok Hft'] = 0
+            
+            monthly_performance.append(row_data)
+        
+        performance_df = pd.DataFrame(monthly_performance)
+        
+        # Formatlama
+        display_report = performance_df.copy()
+        
+        for year in [2024, 2025, 2026]:
+            display_report[f'{year} Ciro'] = display_report[f'{year} Ciro'].apply(lambda x: format_currency(x))
+            display_report[f'{year} Ciro %'] = display_report[f'{year} Ciro %'].apply(lambda x: f"%{x:.1f}")
+            display_report[f'{year} Adet'] = display_report[f'{year} Adet'].apply(lambda x: format_number(x, 0))
+            display_report[f'{year} Adet %'] = display_report[f'{year} Adet %'].apply(lambda x: f"%{x:.1f}")
+            display_report[f'{year} Kar'] = display_report[f'{year} Kar'].apply(lambda x: format_currency(x))
+            display_report[f'{year} Kar %'] = display_report[f'{year} Kar %'].apply(lambda x: f"%{x:.1f}")
+            display_report[f'{year} BM %'] = display_report[f'{year} BM %'].apply(lambda x: f"%{x:.1f}")
+            display_report[f'{year} Stok Hft'] = display_report[f'{year} Stok Hft'].apply(lambda x: f"{x:.1f}")
+        
+        # Tabloyu göster - GENİŞ TABLO
+        st.dataframe(
+            display_report,
+            use_container_width=True,
+            hide_index=True,
+            height=500
+        )
+        
+        # Export rapor
+        st.markdown("#### 💾 Performans Raporunu İndir")
+        
+        col_r1, col_r2 = st.columns(2)
+        
+        with col_r1:
+            # CSV
+            report_csv = performance_df.to_csv(index=False, encoding='utf-8-sig')
+            st.download_button(
+                label="📥 Performans Raporu (CSV)",
+                data=report_csv,
+                file_name="ay_bazinda_performans_2024_2026.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        
+        with col_r2:
+            # Excel
+            report_output = BytesIO()
+            with pd.ExcelWriter(report_output, engine='openpyxl') as writer:
+                performance_df.to_excel(writer, sheet_name='Ay Bazında Performans', index=False)
+            
+            report_output.seek(0)
+            
+            st.download_button(
+                label="📥 Performans Raporu (Excel)",
+                data=report_output,
+                file_name="ay_bazinda_performans_raporu.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
