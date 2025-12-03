@@ -1,0 +1,50 @@
+# Streamlit Configuration
+# Bu dosyayı projenizin ana dizinine koyun
+
+[server]
+# Maximum upload size (MB)
+maxUploadSize = 200
+
+# Session timeout (saniye) - 1 saat
+maxMessageSize = 200
+enableXsrfProtection = true
+enableCORS = false
+
+# Port (opsiyonel)
+port = 8501
+
+[browser]
+# Usage stats toplama (kapalı)
+gatherUsageStats = false
+
+# Server address
+serverAddress = "localhost"
+
+[theme]
+# Tema ayarları (opsiyonel)
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[runner]
+# Magic komutları aktif
+magicEnabled = true
+
+# Fast rerun (geliştirme için)
+fastReruns = true
+
+[client]
+# Toolbar mode
+toolbarMode = "auto"
+
+# Show error details
+showErrorDetails = true
+
+[logger]
+# Log level
+level = "info"
+
+# Log mesajları
+messageFormat = "%(asctime)s %(message)s"
