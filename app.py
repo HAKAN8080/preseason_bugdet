@@ -107,10 +107,23 @@ def load_parameters_from_file():
             with open('saved_parameters.json', 'r', encoding='utf-8') as f:
                 params = json.load(f)
             
+            # Tabloları yükle
             st.session_state.monthly_targets = pd.DataFrame(params['monthly_targets'])
             st.session_state.maingroup_targets = pd.DataFrame(params['maingroup_targets'])
             st.session_state.lessons_learned = pd.DataFrame(params['lessons_learned'])
             st.session_state.price_changes = pd.DataFrame(params['price_changes'])
+            
+            # Diğer parametreleri yükle
+            if 'margin_improvement' in params:
+                st.session_state.margin_improvement = params['margin_improvement']
+            if 'stock_change_pct' in params:
+                st.session_state.stock_change_pct = params['stock_change_pct']
+            if 'inflation_past' in params:
+                st.session_state.inflation_past = params['inflation_past']
+            if 'inflation_future' in params:
+                st.session_state.inflation_future = params['inflation_future']
+            if 'budget_version' in params:
+                st.session_state.budget_version_slider = params['budget_version']
             
             return True
         return False
@@ -487,20 +500,23 @@ if 'monthly_targets' not in st.session_state:
         'Hedef (%)': ['20.0'] * 12
     })
 
-st.session_state.maingroup_targets = pd.DataFrame({
-    'Ana Grup': main_groups,
-    'Hedef (%)': ['20.0'] * len(main_groups)
-})
+if 'maingroup_targets' not in st.session_state:
+    st.session_state.maingroup_targets = pd.DataFrame({
+        'Ana Grup': main_groups,
+        'Hedef (%)': ['20.0'] * len(main_groups)
+    })
 
-lessons_data = {'Ana Grup': main_groups}
-for month in range(1, 13):
-    lessons_data[str(month)] = ['0'] * len(main_groups)
-st.session_state.lessons_learned = pd.DataFrame(lessons_data)
+if 'lessons_learned' not in st.session_state:
+    lessons_data = {'Ana Grup': main_groups}
+    for month in range(1, 13):
+        lessons_data[str(month)] = ['0'] * len(main_groups)
+    st.session_state.lessons_learned = pd.DataFrame(lessons_data)
 
-price_data = {'Ana Grup': main_groups}
-for month in range(1, 13):
-    price_data[str(month)] = [str(inflation_future)] * len(main_groups)
-st.session_state.price_changes = pd.DataFrame(price_data)
+if 'price_changes' not in st.session_state:
+    price_data = {'Ana Grup': main_groups}
+    for month in range(1, 13):
+        price_data[str(month)] = [str(inflation_future)] * len(main_groups)
+    st.session_state.price_changes = pd.DataFrame(price_data)
 
 if 'forecast_result' not in st.session_state:
     st.session_state.forecast_result = None
