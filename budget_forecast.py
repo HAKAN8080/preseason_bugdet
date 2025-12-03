@@ -285,8 +285,9 @@ class BudgetForecaster:
                 target_month -= 12
                 target_year += 1
             
-            # *** İLK 2 AY İÇİN ÖZEL YAKLAŞIM (SADECE 2025 Kasım-Aralık) ***
-            if target_year == 2025 and target_month in [11, 12]:
+            # *** İLK 1 AY İÇİN ÖZEL YAKLAŞIM (SADECE 2025 Aralık) ***
+            # 2025 Kasım artık gerçek veri
+            if target_year == 2025 and target_month == 12:  # Sadece Aralık
                 # Geçen yılın aynı ayını baz al
                 same_month_last_year = self.data[
                     (self.data['Year'] == 2024) & 
@@ -311,7 +312,7 @@ class BudgetForecaster:
                     # 2025 Birim Fiyat = 2024 Fiyat × Fiyat Çarpanı
                     month_forecast['UnitPrice'] = month_forecast['UnitPrice'] * month_forecast['PriceMultiplier']
                     
-                    # 2025 Adet = 2024 Adet × 1.15
+                    # 2025 Adet = 2024 Adet × 1.15 (SABİT)
                     month_forecast['Quantity'] = month_forecast['Quantity'] * 1.15
                     
                     # 2025 Ciro = Adet × Fiyat
