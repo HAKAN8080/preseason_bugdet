@@ -365,10 +365,11 @@ class BudgetForecaster:
                                 break
                 
                 if len(same_month_prev_year) > 0 and same_month_prev_year['Sales'].sum() > 100000:
-                    # Geçen yılın aynı ayını kullan - direkt, trend ekleme!
+                    # Geçen yılın aynı ayını BASE olarak kullan
                     month_forecast = same_month_prev_year.copy()
                     month_forecast['Year'] = target_year
                     month_forecast['Month'] = target_month
+                    # NOT: Aşağıda parametreler uygulanacak (mevsimsellik, hedefler vs)
                 else:
                     # Fallback: base_data
                     month_forecast = base_data.copy()
@@ -605,4 +606,3 @@ class BudgetForecaster:
             'confidence_level': confidence,
             'avg_growth_2024_2025': np.mean(growth_rates) * 100
         }
-        
