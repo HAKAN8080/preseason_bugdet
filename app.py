@@ -549,10 +549,7 @@ with main_tabs[0]:
             key='monthly_editor'
         )
         
-        col_a, col_b, col_c = st.columns(3)
-        col_a.metric("📊 Ortalama", "Hesapla sonrası")
-        col_b.metric("📉 Minimum", "Hesapla sonrası")
-        col_c.metric("📈 Maximum", "Hesapla sonrası")
+
     
     # --- ANA GRUP HEDEFLER ---
     with param_tabs[1]:
